@@ -4,7 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sync"
+	"time"
 )
+
+var wg sync.WaitGroup
 
 func readInput(filename string) []string {
 	file, err := os.Open(filename)
@@ -97,16 +101,30 @@ func AssessSacksPart1(input []string) {
 	fmt.Printf("Total priority: %d\n", prioritySum)
 }
 
+func AssessSackGroup(input []string, priorities chan int) {
+	defer wg.Done()
+	groupItem := DuplicateItemInSacks(input)
+	priority := Priority(groupItem)
+	fmt.Printf("Group item: %s, priority: %d\n", string(groupItem), priority)
+	priorities <- priority
+}
+
 func AssessSacksPart2(input []string) {
 	// groups of 3 sacks
-	prioritySum := 0
+	priorities := make(chan int, len(input)/3)
 	for i := 0; i < len(input); i += 3 {
+		wg.Add(1)
 		groupSacks := input[i : i+3]
-		// fmt.Printf("Group: %v\n", groupSacks)
-		groupItem := DuplicateItemInSacks(groupSacks)
-		priority := Priority(groupItem)
-		prioritySum += priority
-		fmt.Printf("Group item: %s, priority: %d\n", string(groupItem), priority)
+		fmt.Printf("Group: %v\n", groupSacks)
+		go AssessSackGroup(groupSacks, priorities)
+	}
+
+	wg.Wait()
+	close(priorities)
+
+	prioritySum := 0
+	for p := range priorities {
+		prioritySum += p
 	}
 	fmt.Printf("Total priority: %d\n", prioritySum)
 }
@@ -126,6 +144,9 @@ func main() {
 	// AssessSacksPart1(input)
 
 	AssessSacksPart2(test)
+
+	start := time.Now()
 	AssessSacksPart2(input)
+	fmt.Printf("Duration: %s\n", time.Since(start))
 
 }
