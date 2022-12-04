@@ -39,6 +39,8 @@ func parseInput(tokens [][]string) []SharedAssignments {
 	return elfpairs
 }
 
+type EvalFunc func(*Assignment, *Assignment) bool
+
 func hasFullyCoveredSection(elf1, elf2 *Assignment) bool {
 	var firstelf, secondelf *Assignment
 
@@ -67,11 +69,21 @@ func hasFullyCoveredSection(elf1, elf2 *Assignment) bool {
 	return false
 }
 
-func countFullyCoveredSections(elfpairs []SharedAssignments) int {
+func hasPartialCoveredSection(elf1, elf2 *Assignment) bool {
+	if elf1.start >= elf2.start && elf1.start <= elf2.end {
+		return true
+	}
+	if elf2.start >= elf1.start && elf2.start <= elf1.end {
+		return true
+	}
+	return false
+}
+
+func countCoveredSections(elfpairs []SharedAssignments, evalfunc EvalFunc) int {
 	count := 0
 	for _, elves := range elfpairs {
 		fmt.Printf("Elves %v", elves)
-		if hasFullyCoveredSection(&elves[0], &elves[1]) {
+		if evalfunc(&elves[0], &elves[1]) {
 			count += 1
 			fmt.Printf("  overlap")
 		}
@@ -97,6 +109,9 @@ func Main(testmode bool) {
 
 	elfpairs := parseInput(tokens)
 
-	value := countFullyCoveredSections(elfpairs)
+	value := countCoveredSections(elfpairs, hasFullyCoveredSection)
 	fmt.Printf("Elf pairs with fully covered sections: %d\n", value)
+
+	value = countCoveredSections(elfpairs, hasPartialCoveredSection)
+	fmt.Printf("Elf pairs with partial covered sections: %d\n", value)
 }
