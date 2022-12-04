@@ -1,32 +1,13 @@
-package main
+package day3
 
 import (
-	"bufio"
+	"aoc/util"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 )
 
 var wg sync.WaitGroup
-
-func readInput(filename string) []string {
-	file, err := os.Open(filename)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	defer file.Close()
-
-	input := make([]string, 0)
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		text := scanner.Text()
-		input = append(input, text)
-	}
-
-	return input
-}
 
 func Priority(item byte) int {
 	// convert item to byte value
@@ -129,21 +110,21 @@ func AssessSacksPart2(input []string) {
 	fmt.Printf("Total priority: %d\n", prioritySum)
 }
 
-func main() {
-	test := []string{
-		"vJrwpWtwJgWrhcsFMMfFFhFp",
-		"jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL",
-		"PmmdzqPrVvPwwTWBwg",
-		"wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn",
-		"ttgJtRGJQctTZtZT",
-		"CrZsJsPPZsGzwwsLwLmpwMDw",
+func Main(testmode bool) {
+	input := []string{}
+	if testmode {
+		input = []string{"vJrwpWtwJgWrhcsFMMfFFhFp",
+			"jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL",
+			"PmmdzqPrVvPwwTWBwg",
+			"wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn",
+			"ttgJtRGJQctTZtZT",
+			"CrZsJsPPZsGzwwsLwLmpwMDw",
+		}
+	} else {
+		input = util.ReadInput("day3/day3.txt", false).Lines
 	}
-	input := readInput("day3.txt")
 
-	// AssessSacksPart1(test)
-	// AssessSacksPart1(input)
-
-	AssessSacksPart2(test)
+	AssessSacksPart1(input)
 
 	start := time.Now()
 	AssessSacksPart2(input)

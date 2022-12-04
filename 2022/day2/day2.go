@@ -1,9 +1,8 @@
-package main
+package day2
 
 import (
-	"bufio"
+	"aoc/util"
 	"fmt"
-	"os"
 )
 
 type Option struct {
@@ -95,21 +94,12 @@ func (s Strategy) ScorePart2() int {
 }
 
 func readInput(filename string) StrategyGuide {
-	file, err := os.Open(filename)
-	if err != nil {
-		fmt.Println(err)
-		return nil
+	input := util.ReadInput(filename, true)
+
+	guide := StrategyGuide{}
+	for _, s := range input.Tokens {
+		guide = append(guide, Strategy{byte(s[0][0]), byte(s[1][0])})
 	}
-	defer file.Close()
-
-	guide := make(StrategyGuide, 0)
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		text := scanner.Text()
-		guide = append(guide, Strategy{text[0], text[2]})
-	}
-
 	return guide
 }
 
@@ -133,27 +123,20 @@ func sanityCheck() {
 	fmt.Printf("score: %d\n", result)
 }
 
-func main() {
-
-	// sanityCheck()
-
-	strategyGuide := StrategyGuide{
-		Strategy{'A', 'Y'},
-		Strategy{'B', 'X'},
-		Strategy{'C', 'Z'},
-	}
+func Main(testmode bool) {
+	strategyGuide := StrategyGuide{}
 	total := 0
-	for _, s := range strategyGuide {
-		total += s.ScorePart1()
+	if testmode {
+		sanityCheck()
+		strategyGuide = StrategyGuide{
+			Strategy{'A', 'Y'},
+			Strategy{'B', 'X'},
+			Strategy{'C', 'Z'},
+		}
+	} else {
+		strategyGuide = readInput("day2/day2.txt")
 	}
-	fmt.Printf("Part 1 test score: %d\n", total)
-	total = 0
-	for _, s := range strategyGuide {
-		total += s.ScorePart2()
-	}
-	fmt.Printf("Part 2 test score: %d\n", total)
 
-	strategyGuide = readInput("day2.txt")
 	total = 0
 	for _, s := range strategyGuide {
 		total += s.ScorePart1()

@@ -1,9 +1,8 @@
-package main
+package day1
 
 import (
-	"bufio"
+	"aoc/util"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 )
@@ -31,19 +30,11 @@ func SumElves(elves []Elf) int {
 
 func readInput(filename string) []Elf {
 
-	file, err := os.Open(filename)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	defer file.Close()
+	input := util.ReadInput(filename, false)
 
 	elves := make([]Elf, 0)
-
-	scanner := bufio.NewScanner(file)
 	calories := make([]int, 0)
-	for scanner.Scan() {
-		text := scanner.Text()
+	for _, text := range input.Lines {
 		if text == "" {
 			// Create new Elf
 			elf := NewElf(calories)
@@ -62,17 +53,17 @@ func readInput(filename string) []Elf {
 		elves = append(elves, elf)
 	}
 
-	if err := scanner.Err(); err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
 	return elves
 }
 
-func main() {
-	// elves := readInput("testinput.txt")
-	elves := readInput("day1.txt")
+func Main(testmode bool) {
+	elves := []Elf{}
+	if testmode {
+		elves = readInput("testinput.txt")
+	} else {
+		elves = readInput("day1/day1.txt")
+
+	}
 
 	// Day 1
 	// Max calories carried
