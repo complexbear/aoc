@@ -31,6 +31,4 @@ func main() {
 		os.Exit(1)
 	}
 
-	day2.Main(testmode)
-	day3.Main(testmode)
 }
