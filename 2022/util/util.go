@@ -12,7 +12,7 @@ type Input struct {
 	Tokens [][]string
 }
 
-func ReadInput(filename string, asTokens bool) Input {
+func ReadInput(filename string, delim string) Input {
 	input := Input{}
 	file, err := os.Open(filename)
 	if err != nil {
@@ -24,8 +24,8 @@ func ReadInput(filename string, asTokens bool) Input {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		text := scanner.Text()
-		if asTokens {
-			input.Tokens = append(input.Tokens, strings.Split(text, " "))
+		if delim != "" {
+			input.Tokens = append(input.Tokens, strings.Split(text, delim))
 		} else {
 			input.Lines = append(input.Lines, text)
 		}

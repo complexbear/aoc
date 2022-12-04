@@ -1,4 +1,5 @@
 package day3
+// https://adventofcode.com/2022/day/3
 
 import (
 	"aoc/util"
@@ -121,7 +122,7 @@ func Main(testmode bool) {
 			"CrZsJsPPZsGzwwsLwLmpwMDw",
 		}
 	} else {
-		input = util.ReadInput("day3/day3.txt", false).Lines
+		input = util.ReadInput("day3/day3.txt", "").Lines
 	}
 
 	AssessSacksPart1(input)

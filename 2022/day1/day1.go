@@ -1,4 +1,5 @@
 package day1
+// https://adventofcode.com/2022/day/1
 
 import (
 	"aoc/util"
@@ -30,7 +31,7 @@ func SumElves(elves []Elf) int {
 
 func readInput(filename string) []Elf {
 
-	input := util.ReadInput(filename, false)
+	input := util.ReadInput(filename, "")
 
 	elves := make([]Elf, 0)
 	calories := make([]int, 0)

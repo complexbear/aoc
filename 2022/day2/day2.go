@@ -1,4 +1,5 @@
 package day2
+// https://adventofcode.com/2022/day/2
 
 import (
 	"aoc/util"
@@ -94,7 +95,7 @@ func (s Strategy) ScorePart2() int {
 }
 
 func readInput(filename string) StrategyGuide {
-	input := util.ReadInput(filename, true)
+	input := util.ReadInput(filename, " ")
 
 	guide := StrategyGuide{}
 	for _, s := range input.Tokens {

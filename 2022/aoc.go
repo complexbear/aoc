@@ -4,6 +4,7 @@ import (
 	"aoc/day1"
 	"aoc/day2"
 	"aoc/day3"
+	"aoc/day4"
 	"flag"
 	"fmt"
 	"os"
@@ -26,6 +27,8 @@ func main() {
 		day2.Main(testmode)
 	case 3:
 		day3.Main(testmode)
+	case 4:
+		day4.Main(testmode)
 	default:
 		fmt.Println("Invalid day scenario selected")
 		os.Exit(1)
