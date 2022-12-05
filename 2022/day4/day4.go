@@ -3,7 +3,6 @@ package day4
 // https://adventofcode.com/2022/day/4
 
 import (
-	// "aoc/util"
 	"aoc/util"
 	"fmt"
 	"strconv"

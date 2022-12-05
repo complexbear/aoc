@@ -5,10 +5,13 @@ import (
 	"aoc/day2"
 	"aoc/day3"
 	"aoc/day4"
+	"aoc/day5"
 	"flag"
 	"fmt"
 	"os"
 )
+
+type MainFunc func(bool)
 
 func main() {
 	var testmode bool
@@ -20,18 +23,18 @@ func main() {
 
 	fmt.Printf("Test mode: %t\n", testmode)
 
-	switch day {
-	case 1:
-		day1.Main(testmode)
-	case 2:
-		day2.Main(testmode)
-	case 3:
-		day3.Main(testmode)
-	case 4:
-		day4.Main(testmode)
-	default:
+	packageMap := map[int]MainFunc{
+		1: day1.Main,
+		2: day2.Main,
+		3: day3.Main,
+		4: day4.Main,
+		5: day5.Main,
+	}
+
+	f, exists := packageMap[day]
+	if exists == false {
 		fmt.Println("Invalid day scenario selected")
 		os.Exit(1)
 	}
-
+	f(testmode)
 }
