@@ -77,7 +77,7 @@ func readMoves(input [][]string) []Move {
 	return moves
 }
 
-func PerformMove(move *Move, state *State) {
+func PerformMoveSingleCrate(move *Move, state *State) {
 	m := *move
 	s := *state
 	for i := 0; i < m.count; i++ {
@@ -87,6 +87,24 @@ func PerformMove(move *Move, state *State) {
 		s[to] = append(s[to], (*items)[len(*items)-1]) // add item
 		s[from] = s[from][:len(s[from])-1]             // remove item
 	}
+}
+
+func PerformMoveMultiCrate(move *Move, state *State) {
+	m := *move
+	s := *state
+	to := m.to - 1 // adjust for zero indexing
+	from := m.from - 1
+	items := &(s[from])
+	s[to] = append(s[to], (*items)[len(*items)-m.count:]...)
+	s[from] = s[from][:len(s[from])-m.count]
+}
+
+func TopCrates(state *State) string {
+	topcrates := make([]byte, len(*state))
+	for i, s := range *state {
+		topcrates[i] = byte(s[len(s)-1][0])
+	}
+	return string(topcrates)
 }
 
 func Main(testmode bool) {
@@ -115,16 +133,28 @@ func Main(testmode bool) {
 	state := readState(inputstate)
 	moves := readMoves(inputmoves)
 
+	// Part 1
 	state.Print()
 	for _, m := range moves {
-		fmt.Printf("------------- %+v\n", m)
-		PerformMove(&m, &state)
-		state.Print()
+		// fmt.Printf("------------- %+v\n", m)
+		PerformMoveSingleCrate(&m, &state)
+		// state.Print()
 	}
+	state.Print()
 
-	topcrates := make([]byte, len(state))
-	for i, s := range state {
-		topcrates[i] = byte(s[len(s)-1][0])
+	topcrates := TopCrates(&state)
+	fmt.Printf("Part 1: Top crates on stacks: %s\n", topcrates)
+
+	// Part 2
+	state = readState(inputstate)
+	state.Print()
+	for _, m := range moves {
+		// fmt.Printf("------------- %+v\n", m)
+		PerformMoveMultiCrate(&m, &state)
+		// state.Print()
 	}
-	fmt.Printf("Top crates on stacks: %s\n", topcrates)
+	state.Print()
+
+	topcrates = TopCrates(&state)
+	fmt.Printf("Part 2: Top crates on stacks: %s\n", topcrates)
 }
