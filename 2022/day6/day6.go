@@ -20,6 +20,7 @@ func startOfIndex(text *string, bufSize int) int {
 		for _, t := range tracker {
 			if t > 1 {
 				isUnique = false
+				break
 			}
 		}
 		if isUnique {
