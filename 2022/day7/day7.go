@@ -119,7 +119,6 @@ func Main(testmode bool) {
 	// Calc dir total sizes
 	sizes := map[string]int{}
 	root.TotalSize(&sizes)
-	fmt.Println(sizes)
 
 	// Find those < 100000 and generate sum
 	totalSize := 0
@@ -129,4 +128,17 @@ func Main(testmode bool) {
 		}
 	}
 	fmt.Printf("Dir size total: %d\n", totalSize)
+
+	// Find dir with total size that would provide 30000000 free space
+	free := 70000000 - sizes[""]
+	fmt.Printf("Free space: %d\n", free)
+	margin := 30000000 - free
+	fmt.Printf("Find dir with size >= %d\n", margin)
+	deleteSize := sizes[""]
+	for _, size := range sizes {
+		if size >= margin && size < deleteSize {
+			deleteSize = size
+		}
+	}
+	fmt.Printf("Size of dir to delete: %d\n", deleteSize)
 }
