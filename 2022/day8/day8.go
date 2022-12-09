@@ -19,7 +19,7 @@ func print(trees *Grid, visible *Grid) {
 			idx := (h * width) + w
 			tree := (*trees)[idx]
 			text := strconv.Itoa(tree)
-			if (*visible)[idx] > 0 {
+			if visible != nil && (*visible)[idx] > 0 {
 				fmt.Print(chalk.Red(text))
 			} else {
 				fmt.Print(text)
@@ -86,11 +86,28 @@ func visibleView(trees *Grid, visible *Grid, direction string) {
 	}
 }
 
-func findVisibleTrees(trees *Grid, visible *Grid) {
+func findVisibleTrees(trees, visible *Grid) {
 	visibleView(trees, visible, "left")
 	visibleView(trees, visible, "top")
 	visibleView(trees, visible, "right")
 	visibleView(trees, visible, "bottom")
+}
+
+func treeScore(trees *Grid, h, w int) int {
+	origH := h
+	origW := w
+	origTree := (*trees)[rowIdx(h, w)]
+	count := 0
+	
+	
+}
+
+func calcScenicScores(trees, scores *Grid) {
+	for h:=0; h<height; h++ {
+		for w:=0; w<width; w++ {
+			(*scores)[rowIdx(h, w)] = treeScore(trees, h, w)
+		}
+	}
 }
 
 func Main(testmode bool) {
@@ -118,4 +135,17 @@ func Main(testmode bool) {
 	}
 	fmt.Printf("Visible trees: %d\n", totalCount)
 	print(trees, &visible)
+	fmt.Println("-------------------")
+
+	scores := make(Grid, height*width)
+	calcScenicScores(trees, &scores)
+	print(&scores, nil)
+
+	maxScore := 0
+	for _, val := range scores {
+		if val > maxScore {
+			maxScore = val
+		}
+	}
+	fmt.Printf("Max scenic score: %d\n", maxScore)
 }
