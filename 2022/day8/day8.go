@@ -97,14 +97,57 @@ func treeScore(trees *Grid, h, w int) int {
 	origH := h
 	origW := w
 	origTree := (*trees)[rowIdx(h, w)]
-	count := 0
-	
-	
+	var east, west, north, south int
+
+	// search south
+	h = origH + 1
+	for h < height {
+		t := (*trees)[rowIdx(h, origW)]
+		south++
+		if t >= origTree {
+			break
+		}
+		h++
+	}
+
+	// search north
+	h = origH - 1
+	for h >= 0 {
+		north++
+		t := (*trees)[rowIdx(h, origW)]
+		if t >= origTree {
+			break
+		}
+		h--
+	}
+
+	// search west
+	w = origW - 1
+	for w >= 0 {
+		west++
+		t := (*trees)[rowIdx(origH, w)]
+		if t >= origTree {
+			break
+		}
+		w--
+	}
+
+	// search east
+	w = origW + 1
+	for w < width {
+		east++
+		t := (*trees)[rowIdx(origH, w)]		
+		if t >= origTree {
+			break
+		}
+		w++
+	}
+	return east * west * north * south
 }
 
 func calcScenicScores(trees, scores *Grid) {
-	for h:=0; h<height; h++ {
-		for w:=0; w<width; w++ {
+	for h := 0; h < height; h++ {
+		for w := 0; w < width; w++ {
 			(*scores)[rowIdx(h, w)] = treeScore(trees, h, w)
 		}
 	}
