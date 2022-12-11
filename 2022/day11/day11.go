@@ -9,13 +9,16 @@ import (
 )
 
 type Monkey struct {
-	items     []int
+	items     []uint64
 	operation []string
-	test      int
+	test      uint64
 	ifTrue    int
 	ifFalse   int
 	inspects  int
 }
+
+var worryAdjustment bool = true
+var mod uint64 = 1
 
 func readMonkeys(input *[]string) []Monkey {
 	monkeys := make([]Monkey, 0)
@@ -33,10 +36,10 @@ func readMonkeys(input *[]string) []Monkey {
 			itemText := strings.Split(text, ":")[1]
 			itemText = strings.ReplaceAll(itemText, " ", "")
 			itemsStr := strings.Split(itemText, ",")
-			items := make([]int, len(itemsStr))
+			items := make([]uint64, len(itemsStr))
 			for i, s := range itemsStr {
 				val, _ := strconv.Atoi(s)
-				items[i] = val
+				items[i] = uint64(val)
 			}
 			monkey.items = items
 			continue
@@ -49,7 +52,8 @@ func readMonkeys(input *[]string) []Monkey {
 		if strings.Contains(text, "Test") {
 			testText := strings.Split(text, " ")
 			val, _ := strconv.Atoi(testText[len(testText)-1])
-			monkey.test = val
+			monkey.test = uint64(val)
+			mod *= monkey.test
 			continue
 		}
 		if strings.Contains(text, "If true") {
@@ -68,14 +72,16 @@ func readMonkeys(input *[]string) []Monkey {
 	return monkeys
 }
 
-func applyOperation(opStr []string, old int) int {
+func applyOperation(opStr []string, old uint64) uint64 {
 	a := old
 	b := old
 	if opStr[0] != "old" {
-		a, _ = strconv.Atoi(opStr[0])
+		i, _ := strconv.Atoi(opStr[0])
+		a = uint64(i)
 	}
 	if opStr[2] != "old" {
-		b, _ = strconv.Atoi(opStr[2])
+		i, _ := strconv.Atoi(opStr[2])
+		b = uint64(i)
 	}
 	switch opStr[1] {
 	case "+":
@@ -94,9 +100,11 @@ func inspect(m *Monkey, monkeys *[]Monkey) {
 	for _, item := range m.items {
 		(*m).inspects++
 		// bump worry
-		item = applyOperation(m.operation, item)
-		// divide by 3
-		item /= 3
+		item = applyOperation(m.operation, item) % mod
+		// divide
+		if worryAdjustment {
+			item /= 3
+		}
 		// test
 		target := 0
 		if item%m.test == 0 {
@@ -106,7 +114,7 @@ func inspect(m *Monkey, monkeys *[]Monkey) {
 		}
 		// throw item
 		(*monkeys)[target].items = append((*monkeys)[target].items, item)
-		(*m).items = make([]int, 0)
+		(*m).items = make([]uint64, 0)
 	}
 }
 
@@ -146,4 +154,13 @@ func Main(testmode bool) {
 	}
 	sort.Ints(inspections)
 	fmt.Printf("Monkey business: %d\n", inspections[len(inspections)-1]*inspections[len(inspections)-2])
+
+	// Part 2
+	worryAdjustment = false
+	monkeys = readMonkeys(&input)
+	print(&monkeys)
+	for i := 0; i < 20; i++ {
+		round(&monkeys)
+	}
+	print(&monkeys)
 }
