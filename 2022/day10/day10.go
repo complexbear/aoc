@@ -13,6 +13,7 @@ var register []int
 
 func run(input *[]string) {
 	register = make([]int, len(*input)*2)
+	register[0] = x
 
 	for _, text := range *input {
 		tokens := strings.Split(text, " ")
@@ -36,6 +37,20 @@ func run(input *[]string) {
 	}
 }
 
+func draw() {
+	for l := 0; l < 6; l++ {
+		crt := make([]byte, 40)
+		for c := 0; c < len(crt); c++ {
+			s := register[(l*len(crt)) + c + 1]
+			crt[c] = '.'
+			if c >= s-1 && c <= s+1 {
+				crt[c] = '#'
+			}
+		}
+		fmt.Println(string(crt))
+	}
+}
+
 func Main(testmode bool) {
 	var input []string
 	if testmode {
@@ -45,10 +60,8 @@ func Main(testmode bool) {
 	}
 
 	run(&input)
-	// for i, s := range signal {
-	// 	fmt.Printf("%d:\t%d\n", i, s)
-	// }
 
+	// Part 1
 	signalPoints := []int{20, 60, 100, 140, 180, 220}
 	signalSum := 0
 	for _, s := range signalPoints {
@@ -56,4 +69,7 @@ func Main(testmode bool) {
 		signalSum += register[s] * s
 	}
 	fmt.Printf("Total: %d\n", signalSum)
+
+	// Part 2
+	draw()
 }
