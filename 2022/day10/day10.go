@@ -7,13 +7,12 @@ import (
 	"strings"
 )
 
-var clock int = 0
+var clock int = 1
 var x int = 1
-var history []int
+var register []int
 
 func run(input *[]string) {
-	history = make([]int, len(*input)*2)
-	history[0] = 1
+	register = make([]int, len(*input)*2)
 
 	for _, text := range *input {
 		tokens := strings.Split(text, " ")
@@ -22,16 +21,18 @@ func run(input *[]string) {
 		case "noop":
 			{
 				clock++
+				register[clock] = x
 			}
 		case "addx":
 			{
 				val, _ := strconv.Atoi(tokens[1])
-				history[clock+1] = history[clock]
-				clock += 2
+				clock++
+				register[clock] = x
+				clock++
 				x += val
+				register[clock] = x
 			}
 		}
-		history[clock] = x
 	}
 }
 
@@ -44,4 +45,15 @@ func Main(testmode bool) {
 	}
 
 	run(&input)
+	// for i, s := range signal {
+	// 	fmt.Printf("%d:\t%d\n", i, s)
+	// }
+
+	signalPoints := []int{20, 60, 100, 140, 180, 220}
+	signalSum := 0
+	for _, s := range signalPoints {
+		fmt.Printf("Cyl:%d\t%d\t%d\n", s, register[s], register[s]*s)
+		signalSum += register[s] * s
+	}
+	fmt.Printf("Total: %d\n", signalSum)
 }
