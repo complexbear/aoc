@@ -2,6 +2,7 @@ package main
 
 import (
 	"aoc/day1"
+	"aoc/day10"
 	"aoc/day2"
 	"aoc/day3"
 	"aoc/day4"
@@ -28,15 +29,16 @@ func main() {
 	fmt.Printf("Test mode: %t\n", testmode)
 
 	packageMap := map[int]MainFunc{
-		1: day1.Main,
-		2: day2.Main,
-		3: day3.Main,
-		4: day4.Main,
-		5: day5.Main,
-		6: day6.Main,
-		7: day7.Main,
-		8: day8.Main,
-		9: day9.Main,
+		1:  day1.Main,
+		2:  day2.Main,
+		3:  day3.Main,
+		4:  day4.Main,
+		5:  day5.Main,
+		6:  day6.Main,
+		7:  day7.Main,
+		8:  day8.Main,
+		9:  day9.Main,
+		10: day10.Main,
 	}
 
 	f, exists := packageMap[day]
