@@ -3,6 +3,7 @@ package main
 import (
 	"aoc/day1"
 	"aoc/day10"
+	"aoc/day11"
 	"aoc/day2"
 	"aoc/day3"
 	"aoc/day4"
@@ -39,6 +40,7 @@ func main() {
 		8:  day8.Main,
 		9:  day9.Main,
 		10: day10.Main,
+		11: day11.Main,
 	}
 
 	f, exists := packageMap[day]
