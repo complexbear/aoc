@@ -100,10 +100,12 @@ func inspect(m *Monkey, monkeys *[]Monkey) {
 	for _, item := range m.items {
 		(*m).inspects++
 		// bump worry
-		item = applyOperation(m.operation, item) % mod
+		item = applyOperation(m.operation, item)
 		// divide
 		if worryAdjustment {
 			item /= 3
+		} else {
+			item %= mod
 		}
 		// test
 		target := 0
