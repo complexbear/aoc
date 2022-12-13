@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/2022",
-            "args": ["-day", "12", "-test"]
+            "args": ["-day", "13", "-test"]
         }
     ]
 }
