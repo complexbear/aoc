@@ -13,10 +13,9 @@ type Point struct {
 }
 type Map [][]byte
 
-var minX int = 500
-var maxX int = 500
-var minY int
 var maxY int
+var maxX int = 1000
+var part2 bool = false
 
 func print(m *Map) {
 	for y := 0; y < len((*m)[0]); y++ {
@@ -41,15 +40,6 @@ func buildMap(input *[][]string) Map {
 			point := strings.Split(t, ",")
 			x, _ := strconv.Atoi(point[0])
 			y, _ := strconv.Atoi(point[1])
-			if x < minX {
-				minX = x
-			}
-			if x > maxX {
-				maxX = x
-			}
-			if y < minY {
-				minY = y
-			}
 			if y > maxY {
 				maxY = y
 			}
@@ -57,20 +47,20 @@ func buildMap(input *[][]string) Map {
 		}
 		lines = append(lines, line)
 	}
-	fmt.Println(minX, maxX, minY, maxY)
+	if part2 {
+		maxY += 2
+	}
 
 	// build map
-	m := make(Map, maxX-minX+1)
+	m := make(Map, maxX)
 	for i := 0; i < len(m); i++ {
-		m[i] = make([]byte, maxY-minY+1)
+		m[i] = make([]byte, maxY+1)
 	}
 	// draw rocks
 	for _, line := range lines {
 		for i := 1; i < len(line); i++ {
 			a := line[i-1]
-			a.x -= minX
 			b := line[i]
-			b.x -= minX
 			m[a.x][a.y] = '#'
 			m[b.x][b.y] = '#'
 
@@ -89,6 +79,11 @@ func buildMap(input *[][]string) Map {
 			}
 		}
 	}
+	if part2 {
+		for i := 0; i < len(m); i++ {
+			m[i][maxY] = '#'
+		}
+	}
 	return m
 }
 
@@ -103,14 +98,15 @@ func validMove(pt Point, m *Map) bool {
 }
 
 func offMap(pt Point) bool {
-	if pt.x < 0 || pt.x >= maxX-minX+1 || pt.y > maxY {
+	if pt.x < 0 || pt.x >= maxX || pt.y > maxY {
 		return true
 	}
 	return false
 }
 
 func dropGrain(m *Map) bool {
-	pt := Point{x: 500 - minX, y: 0}
+	origin := Point{x: 500, y: 0}
+	pt := origin
 	for {
 		down := Point{x: pt.x, y: pt.y + 1}
 		if validMove(down, m) {
@@ -128,12 +124,18 @@ func dropGrain(m *Map) bool {
 			continue
 		}
 
-		if offMap(down) || offMap(right) || offMap(left) {
+		// part 1
+		if part2 == false && (offMap(down) || offMap(right) || offMap(left)) {
 			return false
 		}
 
-		// rest
+		// at rest
 		(*m)[pt.x][pt.y] = 'o'
+
+		// part 2
+		if pt == origin {
+			return false
+		}
 		return true
 	}
 }
@@ -158,11 +160,20 @@ func Main(testmode bool) {
 	} else {
 		input = util.ReadInput("day14/day14.txt", " -> ").Tokens
 	}
-	m := buildMap(&input)
-	print(&m)
 
 	// part 1
-	units := pourSand(&m)
-	print(&m)
-	fmt.Printf("Grains of sand: %d\n", units)
+	m := buildMap(&input)
+	// print(&m)
+	part1 := pourSand(&m)
+	// print(&m)
+
+	// part 2
+	part2 = true
+	m = buildMap(&input)
+	// print(&m)
+	part2 := pourSand(&m) + 1 // doesn't count the origin grain
+	// print(&m)
+
+	fmt.Printf("Grains of sand part 1: %d\n", part1)
+	fmt.Printf("Grains of sand part 2: %d\n", part2)
 }
