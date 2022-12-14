@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 type Input struct {
 	Lines  []string
 	Tokens [][]string
