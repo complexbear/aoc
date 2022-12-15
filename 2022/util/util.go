@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -12,6 +13,39 @@ func Abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+func Min(x ...int) int {
+	min := x[0]
+	for i := range x {
+		if x[i] < min {
+			min = x[i]
+		}
+	}
+	return min
+}
+
+func Max(x ...int) int {
+	max := x[0]
+	for i := range x {
+		if x[i] > max {
+			max = x[i]
+		}
+	}
+	return max
+}
+
+func StrToInt(s string) int {
+	val, _ := strconv.Atoi(s)
+	return val
+}
+
+func StringsToInts(items []string) []int {
+	ints := make([]int, len(items))
+	for i, s := range items {
+		ints[i] = StrToInt(s)
+	}
+	return ints
 }
 
 type Input struct {
