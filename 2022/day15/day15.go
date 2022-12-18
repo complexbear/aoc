@@ -21,6 +21,8 @@ var minX int
 var maxX int
 var intersectLine int
 var intersectCoverage map[int]byte = make(map[int]byte, 0)
+var bMin int
+var bMax int
 
 func parseInput(input []string) []Sensor {
 	pattern := regexp.MustCompile(`Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)`)
@@ -69,15 +71,17 @@ func Main(testmode bool) {
 	if testmode {
 		input = util.ReadInput("day15/test.txt", "").Lines
 		intersectLine = 10
+		bMax = 20
 	} else {
 		input = util.ReadInput("day15/day15.txt", "").Lines
 		intersectLine = 2000000
+		bMax = 4000000
 	}
 
 	sensors := parseInput(input)
 
 	// part 1
-	// count covered positions at y=testpos
+	// count covered positions at y=intersetLine
 	for _, s := range sensors {
 		plotCoverage(s)
 	}
@@ -88,5 +92,26 @@ func Main(testmode bool) {
 		}
 	}
 	fmt.Printf("\nCovered pos at y=%d: %d\n", intersectLine, count)
-	// fmt.Println(intersectCoverage)
+
+	// part 2
+	minX = 0
+	var x int
+	var y int
+	for y = 0; y <= bMax; y++ {
+		fmt.Printf("testing line %d\n", y)
+		intersectLine = y
+		intersectCoverage = make(map[int]byte, 0)
+		for _, s := range sensors {
+			plotCoverage(s)
+		}
+		for x = 0; x <= bMax; x++ {
+			_, exists := intersectCoverage[x]
+			if !exists {
+				goto done
+			}
+		}
+	}
+done:
+	fmt.Printf("x=%d, y=%d\n", x, y)
 }
+
