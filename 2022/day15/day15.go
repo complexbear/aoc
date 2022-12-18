@@ -48,6 +48,7 @@ func parseInput(input []string) []Sensor {
 
 func buildMap(sensors []Sensor) Map {
 	// allocate
+	fmt.Printf("Map dim: x=%d-%d, y=%d-%d\n", minX, maxX, minY, maxY)
 	m := make(Map, maxX-minX+1)
 	for x := 0; x < len(m); x++ {
 		m[x] = make([]byte, maxY-minY+1)
@@ -73,18 +74,58 @@ func print(m *Map) {
 	}
 }
 
+func markPoint(x, y int, m *Map) {
+	if x < 0 || x >= len(*m) || y < 0 || y >= len((*m)[0]) {
+		return
+	}
+	if (*m)[x][y] == '.' {
+		(*m)[x][y] = '#'
+	}
+}
+
+func plotCoverage(s Sensor, m *Map) {
+	fmt.Printf("Plot %+v\n", s)
+	// plot area of manhattan distance beacon is from sensor
+	dx := util.Abs(s.beacon.x - s.x)
+	dy := util.Abs(s.beacon.y - s.y)
+	dist := dx + dy
+
+	y := 0
+	for x := dist; x >= 0; x-- {
+		for x1 := s.x + x - minX; x1 > s.x-x+1; x1-- {
+			markPoint(x1, s.y+y, m)
+			markPoint(x1, s.y-y, m)
+		}
+		y++
+	}
+}
+
 func Main(testmode bool) {
 	var input []string
+	var testpos int
 	if testmode {
 		input = util.ReadInput("day15/test.txt", "").Lines
+		testpos = 10
 	} else {
 		input = util.ReadInput("day15/day15.txt", "").Lines
+		testpos = 2000000
 	}
 
 	sensors := parseInput(input)
-	// for _, s := range sensors {
-	// 	fmt.Printf("%+v\n", s)
-	// }
+
+	// part 1
 	m := buildMap(sensors)
-	print(&m)
+	// print(&m)
+	for _, s := range sensors {
+		plotCoverage(s, &m)
+	}
+	// print(&m)
+	// count covered positions at y=testpos
+	count := 0
+	for x := 0; x < len(m); x++ {
+		if m[x][testpos] == '#' {
+			count++
+		}
+	}
+	fmt.Printf("Covered pos at y=%d: %d\n", testpos, count)
 }
