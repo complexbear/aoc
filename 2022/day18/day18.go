@@ -83,16 +83,27 @@ func calcMinMax(droplets []Droplet) {
 	}
 }
 
-func mapVerticiesPart2() {
-	for v, _ := range verticies {
-		refD := Droplet{y:v.y, z:v.z}
-		xInside := v.x > minX[refD] && v.x < maxX[refD]
-		refD = Droplet{x:v.x, z:v.z}
-		yInside := v.y > minY[refD] && v.y >= maxY[refD]
-		refD = Droplet{x:v.x,y:v.y}
-		zInside := v.z > minZ[refD] && v.z >= maxZ[refD]
-		if xInside && yInside && zInside {
-			verticies[v] = 0
+func mapVerticiesPart2(droplets []Droplet) {
+	for _, d := range droplets {
+		// generate neighbour positions
+		neighbours := make([]Droplet, 6)
+		neighbours[0] = Droplet{x: d.x, y: d.y, z: d.z + 1}
+		neighbours[1] = Droplet{x: d.x, y: d.y, z: d.z - 1}
+		neighbours[2] = Droplet{x: d.x, y: d.y + 1, z: d.z}
+		neighbours[3] = Droplet{x: d.x, y: d.y - 1, z: d.z}
+		neighbours[4] = Droplet{x: d.x + 1, y: d.y, z: d.z}
+		neighbours[5] = Droplet{x: d.x - 1, y: d.y, z: d.z}
+
+		for _, n := range neighbours {
+			refD := Droplet{y:n.y, z:n.z}
+			xInside := n.x > minX[refD] && n.x < maxX[refD]
+			refD = Droplet{x:n.x, z:n.z}
+			yInside := n.y > minY[refD] && n.y < maxY[refD]
+			refD = Droplet{x:n.x,y:n.y}
+			zInside := n.z > minZ[refD] && n.z < maxZ[refD]
+			if xInside && yInside && zInside {
+				verticies[n] = 0
+			}
 		}
 	}
 }
@@ -109,7 +120,7 @@ func Main(testmode bool) {
 	// fmt.Println(droplets)
 
 	mapVerticiesPart1(droplets)
-	// fmt.Println(verticies)
+	fmt.Println(verticies)
 
 	// Part 1
 	area := 0
@@ -127,7 +138,7 @@ func Main(testmode bool) {
 	}
 
 	calcMinMax(droplets)
-	mapVerticiesPart2()
+	mapVerticiesPart2(droplets)
 	// fmt.Println(verticies)
 	interiorArea := 0
 	for _, v := range verticies {
