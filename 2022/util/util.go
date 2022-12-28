@@ -8,6 +8,16 @@ import (
 	"strings"
 )
 
+type Logger struct {
+	Debug bool
+}
+
+func (l *Logger) Print(s string, args ...interface{}) {
+	if l.Debug {
+		fmt.Printf(s+"\n", args...)
+	}
+}
+
 func Abs(x int) int {
 	if x < 0 {
 		return -x
