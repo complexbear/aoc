@@ -2,6 +2,7 @@ package day17
 
 import (
 	"aoc/util"
+	"bytes"
 	"fmt"
 	"sort"
 )
@@ -10,7 +11,11 @@ var log util.Logger = util.Logger{}
 var width int = 7
 var highestBlock int = 0
 var chamber [][]byte
-var startPatternIdx int = 1
+var shapeUse []int
+
+var startPatternIdx int = 0
+var patternSize int = 0
+var shapesInPattern int = 0
 
 type Shape struct {
 	blocks [][]byte
@@ -86,6 +91,7 @@ func (s Shape) Settle() {
 			}
 		}
 	}
+	shapeUse[s.y] += 1
 }
 
 func ReverseSlice[T comparable](s []T) {
@@ -119,6 +125,7 @@ func newBlock(s Shape, moves []byte) []byte {
 	s.y = highestBlock + 4
 	for len(chamber) <= s.y {
 		chamber = append(chamber, make([]byte, width))
+		shapeUse = append(shapeUse, 0)
 	}
 	for midx := 0; midx < len(moves); midx++ {
 		m := moves[midx]
@@ -138,20 +145,49 @@ func newBlock(s Shape, moves []byte) []byte {
 	return []byte{}
 }
 
-func cullChamber() int {
+func compareChambers(a, b [][]byte) bool {
+	// return true if a and b match
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if bytes.Compare(a[i], b[i]) != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func findPattern() {
 	// to manage memory, detect when block pattern repeats
 	// and discard the repetitions
 	//
-	// method: cut chamber in 2 and compare halves
+	// method: start with top of chamber and search down until
+	// same line pattern found. then cut chamber in 2 and compare halves.
 	// if they match then the pattern has repeated.
-	// the current shape and move also have to match
-	currentHighestBlock := highestBlock
+	//
+	// we can then set the pattern size and start index
 
-	startIdx := 1
-
-	chamber = chamber[startIdx:]
-	highestBlock = startIdx
-	return currentHighestBlock
+	// bottom up search
+	for y := 1; y < highestBlock; y++ {
+		patternBlock := chamber[y:highestBlock]
+		if len(patternBlock) < 20 {
+			continue
+		}
+		midwayIdx := len(patternBlock) / 2
+		patternA := patternBlock[:midwayIdx]
+		patternB := patternBlock[midwayIdx:]
+		if compareChambers(patternA, patternB) {
+			// pattern found,
+			startPatternIdx = y + midwayIdx
+			patternSize = midwayIdx
+			// how many shapes in the pattern
+			for i := startPatternIdx; i < startPatternIdx+midwayIdx; i++ {
+				shapesInPattern += shapeUse[i]
+			}
+			return
+		}
+	}
 }
 
 func PrintChamber() {
@@ -174,18 +210,19 @@ func Main(testmode bool) {
 	var shapeCount int
 	if testmode {
 		input = util.ReadInput("day17/test.txt", "").Lines
+		shapeCount = 2022
 		log.Debug = false
 	} else {
 		input = util.ReadInput("day17/day17.txt", "").Lines
+		shapeCount = 1000000000000
 	}
 
-	shapeCount = 500
-	// shapeCount = 1000000000000
 	orig_moves := []byte(input[0])
 	moves := orig_moves
 
 	// init chamber
 	chamber = make([][]byte, 5)
+	shapeUse = make([]int, 5)
 	for i := 0; i < len(chamber); i++ {
 		chamber[i] = make([]byte, width)
 	}
@@ -199,14 +236,16 @@ func Main(testmode bool) {
 		s.Print()
 	}
 
+	jumped := false
 	cumHighestBlock := 0
 	for sidx := 0; sidx < shapeCount; sidx++ {
 		s := shapes[sidx%len(shapes)]
 
-		// fmt.Printf("Shape %d\n", sidx+1)
+		log.Print("Shape %d\n", sidx+1)
 		s.Print()
 		log.Print(string(moves))
 		log.Print("******")
+
 		moves = newBlock(s, moves)
 		PrintChamber()
 
@@ -217,11 +256,22 @@ func Main(testmode bool) {
 		}
 
 		// Cull chamber size when it repeats
-		// cumHighestBlock += cullChamber()
+		if sidx > len(shapes) && patternSize == 0 {
+			findPattern()
+		}
+		if patternSize != 0 && jumped == false {
+			// jump ahead as far as we can
+			remainingShapes := shapeCount - sidx
+			patternRepeats := remainingShapes / shapesInPattern
+			cumHighestBlock += patternRepeats * patternSize
+			sidx = shapeCount - (remainingShapes % shapesInPattern)
+			jumped = true
+		}
 	}
 
 	log.Debug = true
-	PrintChamber()
+	// PrintChamber()
 	cumHighestBlock += highestBlock
+	fmt.Printf("Pattern detected at idx:%d, size:%d\n", startPatternIdx, patternSize)
 	fmt.Printf("Height: %d\n", cumHighestBlock)
 }
