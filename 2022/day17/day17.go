@@ -255,12 +255,12 @@ func Main(testmode bool) {
 			moves = append(moves, orig_moves...)
 		}
 
-		// Cull chamber size when it repeats
+		// start looking for repeated pattern
 		if sidx > len(shapes) && patternSize == 0 {
 			findPattern()
 		}
+		// pattern found, so we should jump ahead as far as we can
 		if patternSize != 0 && jumped == false {
-			// jump ahead as far as we can
 			remainingShapes := shapeCount - sidx
 			patternRepeats := remainingShapes / shapesInPattern
 			cumHighestBlock += patternRepeats * patternSize
