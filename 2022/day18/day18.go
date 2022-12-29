@@ -6,13 +6,17 @@ import (
 	"strconv"
 )
 
-var verticies map[Droplet]int = make(map[Droplet]int, 0)
-var minX map[Droplet]int = map[Droplet]int{}
-var maxX map[Droplet]int = map[Droplet]int{}
-var minY map[Droplet]int = map[Droplet]int{}
-var maxY map[Droplet]int = map[Droplet]int{}
-var minZ map[Droplet]int = map[Droplet]int{}
-var maxZ map[Droplet]int = map[Droplet]int{}
+type DropletMap map[Droplet]int
+
+var verticies DropletMap = make(DropletMap, 0)
+var interiorDroplets DropletMap = make(DropletMap, 0)
+
+var minX DropletMap = DropletMap{}
+var maxX DropletMap = DropletMap{}
+var minY DropletMap = DropletMap{}
+var maxY DropletMap = DropletMap{}
+var minZ DropletMap = DropletMap{}
+var maxZ DropletMap = DropletMap{}
 
 type Droplet struct {
 	x int
@@ -58,28 +62,34 @@ func mapVerticiesPart1(droplets []Droplet) {
 	}
 }
 
+func minMax(d Droplet, minMap, maxMap *DropletMap, val int) {
+	minD, minExists := (*minMap)[d]
+	maxD, maxExists := (*maxMap)[d]
+	if minExists {
+		(*minMap)[d] = util.Min(minD, val)
+	} else {
+		(*minMap)[d] = val
+	}
+	if maxExists {
+		(*maxMap)[d] = util.Max(maxD, val)
+	} else {
+		(*maxMap)[d] = val
+	}
+}
+
 func calcMinMax(droplets []Droplet) {
 	for _, d := range droplets {
 		// X
-		refD := Droplet{y:d.y, z:d.z}
-		minD := minX[refD]
-		maxD := maxX[refD]
-		minX[refD] = util.Min(minD, d.x)
-		maxX[refD] = util.Max(maxD, d.x)
+		refD := Droplet{y: d.y, z: d.z}
+		minMax(refD, &minX, &maxX, d.x)
 
 		// Y
-		refD = Droplet{x:d.x, z:d.z}
-		minD = minY[refD]
-		maxD = maxY[refD]
-		minY[refD] = util.Min(minD, d.y)
-		maxY[refD] = util.Max(maxD, d.y)
+		refD = Droplet{x: d.x, z: d.z}
+		minMax(refD, &minY, &maxY, d.y)
 
 		// X
-		refD = Droplet{x:d.x, y:d.y}
-		minD = minZ[refD]
-		maxD = maxZ[refD]
-		minZ[refD] = util.Min(minD, d.z)
-		maxZ[refD] = util.Max(maxD, d.z)
+		refD = Droplet{x: d.x, y: d.y}
+		minMax(refD, &minZ, &maxZ, d.z)
 	}
 }
 
@@ -95,14 +105,14 @@ func mapVerticiesPart2(droplets []Droplet) {
 		neighbours[5] = Droplet{x: d.x - 1, y: d.y, z: d.z}
 
 		for _, n := range neighbours {
-			refD := Droplet{y:n.y, z:n.z}
+			refD := Droplet{y: n.y, z: n.z}
 			xInside := n.x > minX[refD] && n.x < maxX[refD]
-			refD = Droplet{x:n.x, z:n.z}
+			refD = Droplet{x: n.x, z: n.z}
 			yInside := n.y > minY[refD] && n.y < maxY[refD]
-			refD = Droplet{x:n.x,y:n.y}
+			refD = Droplet{x: n.x, y: n.y}
 			zInside := n.z > minZ[refD] && n.z < maxZ[refD]
 			if xInside && yInside && zInside {
-				verticies[n] = 0
+				interiorDroplets[n] += 1
 			}
 		}
 	}
@@ -132,17 +142,24 @@ func Main(testmode bool) {
 	// Part 2
 	// look over the vertices, and see which lie within the min/max of each x,y,z plane
 	// for those that do, reduce their value to 0 and re-sum the area
-	mapDroplets := make(map[Droplet]int, len(droplets))
+	mapDroplets := make(DropletMap, len(droplets))
 	for _, d := range droplets {
 		mapDroplets[d] = verticies[d]
 	}
 
 	calcMinMax(droplets)
 	mapVerticiesPart2(droplets)
-	// fmt.Println(verticies)
+	fmt.Println(interiorDroplets)
+
 	interiorArea := 0
-	for _, v := range verticies {
+	for _, v := range interiorDroplets {
 		interiorArea += v
 	}
 	fmt.Printf("Total area: %d\tExterior area: %d\n", area, interiorArea)
+	fmt.Println(minX)
+	fmt.Println(maxX)
+	fmt.Println(minY)
+	fmt.Println(maxY)
+	fmt.Println(minZ)
+	fmt.Println(maxZ)
 }
