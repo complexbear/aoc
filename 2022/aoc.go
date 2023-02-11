@@ -8,6 +8,7 @@ import (
 	"aoc/day13"
 	"aoc/day14"
 	"aoc/day15"
+	"aoc/day16"
 	"aoc/day17"
 	"aoc/day18"
 	"aoc/day2"
@@ -51,6 +52,7 @@ func main() {
 		13: day13.Main,
 		14: day14.Main,
 		15: day15.Main,
+		16: day16.Main,
 		17: day17.Main,
 		18: day18.Main,
 	}
