@@ -25,23 +25,11 @@ func printList(l *list.List) {
 	// fmt.Printf("%d\n", e.Value.(int))
 }
 
-func decode(orig []int) []int {
-
-	// build
-	// map values to list nodes for fast lookup
-	size := len(orig)
-	origValues := make([]*list.Element, size)
-	buffer := list.New()
-	for i, n := range orig {
-		e := buffer.PushBack(n)
-		origValues[i] = e
-	}
-	printList(buffer)
-
-	// decode
+func mix(origValues *[]*list.Element, buffer *list.List) {
+	size := buffer.Len()
 	for j := 0; j < size; j++ {
 		// lookup element to move
-		srcElem := origValues[j]
+		srcElem := (*origValues)[j]
 		mark := srcElem
 
 		n := srcElem.Value.(int)
@@ -79,6 +67,25 @@ func decode(orig []int) []int {
 		}
 		printList(buffer)
 	}
+}
+
+func decode(orig []int, mixes int) []int {
+
+	// build
+	// map values to list nodes for fast lookup
+	size := len(orig)
+	origValues := make([]*list.Element, size)
+	buffer := list.New()
+	for i, n := range orig {
+		e := buffer.PushBack(n)
+		origValues[i] = e
+	}
+	printList(buffer)
+
+	// mix
+	for m:=0; m<mixes; m++ {
+		mix(&origValues, buffer)
+	}
 
 	// convert back to list
 	printList(buffer)
@@ -112,11 +119,22 @@ func Main(testmode bool) {
 		input = util.ReadInput("day20/day20.txt", "").Lines
 	}
 
+	// part 1
 	numbers := parseInput(input)
 	fmt.Println(numbers)
 
-	decoded := decode(numbers)
+	decoded := decode(numbers, 1)
 	fmt.Println(decoded)
 
-	fmt.Println("Result:", calcResult(decoded))
+	fmt.Println("Part 1 result:", calcResult(decoded))
+
+	// part 2
+	decode_key := 811589153
+	for i:=0; i<len(numbers); i++ {
+		numbers[i] *= decode_key
+	}
+	decoded = decode(numbers, 10)
+	fmt.Println(decoded)
+	fmt.Println("Part 2 result:", calcResult(decoded))
+
 }
