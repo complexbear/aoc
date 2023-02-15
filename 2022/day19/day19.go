@@ -5,25 +5,64 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
+
+	"github.com/mitchellh/hashstructure/v2"
 )
 
-const DURATION int = 10
+var DURATION = 0
 
 type Cost struct {
-	name  string
-	value int
+	Name  int
+	Value int
 }
 
 type Robot struct {
-	name  string
-	costs []Cost
+	Name  int
+	Costs []Cost
 }
 
 type Blueprint struct {
-	robots map[string]Robot
+	Robots [4]Robot
 }
 
-func createRobot(name string, input string) Robot {
+type State struct {
+	Robots [4]int
+	Stock  [4]int
+	Time   int
+}
+
+func (s *State) hash() uint64 {
+	hash, err := hashstructure.Hash(*s, hashstructure.FormatV2, nil)
+	if err != nil {
+		panic("doh")
+	}
+	return hash
+}
+
+const ORE = 0
+const CLAY = 1
+const OBSIDIAN = 2
+const GEODE = 3
+
+var NAMES = [4]int{3, 2, 1, 0}
+var NAMES_STR = [4]string{"ORE", "CLAY", "OBSIDIAN", "GEODE"}
+
+func nameIdx(name string) int {
+	switch name {
+	case "ore":
+		return ORE
+	case "clay":
+		return CLAY
+	case "obsidian":
+		return OBSIDIAN
+	case "geode":
+		return GEODE
+	}
+	return -1
+}
+
+func createRobot(input string) Robot {
 	pattern1 := regexp.MustCompile(`Each (\w+) robot costs (\d+) (\w+)$`)
 	pattern2 := regexp.MustCompile(`Each (\w+) robot costs (\d+) (\w+) and (\d+) (\w+)$`)
 
@@ -32,12 +71,12 @@ func createRobot(name string, input string) Robot {
 		tokens = pattern2.FindStringSubmatch(input)
 	}
 	r := Robot{}
-	r.name = tokens[1]
+	r.Name = nameIdx(tokens[1])
 	tokens = tokens[2:]
-	r.costs = make([]Cost, len(tokens)/2)
-	for i, _ := range r.costs {
-		r.costs[i].name = tokens[i*2+1]
-		r.costs[i].value = util.StrToInt(tokens[i*2])
+	r.Costs = make([]Cost, len(tokens)/2)
+	for i, _ := range r.Costs {
+		r.Costs[i].Name = nameIdx(tokens[i*2+1])
+		r.Costs[i].Value = util.StrToInt(tokens[i*2])
 	}
 	return r
 }
@@ -49,84 +88,130 @@ func parseInput(text []string) []Blueprint {
 		items := strings.Split(t, ".")
 
 		b := &blueprints[i]
-		b.robots = make(map[string]Robot, 4)
-		b.robots["ore"] = createRobot("ore", items[0])
-		b.robots["clay"] = createRobot("clay", items[1])
-		b.robots["obsidian"] = createRobot("obsidian", items[2])
-		b.robots["geode"] = createRobot("geode", items[3])
+		b.Robots[ORE] = createRobot(items[ORE])
+		b.Robots[CLAY] = createRobot(items[CLAY])
+		b.Robots[OBSIDIAN] = createRobot(items[OBSIDIAN])
+		b.Robots[GEODE] = createRobot(items[GEODE])
 		fmt.Println(*b)
 	}
+	fmt.Println("Blueprints:", len(blueprints))
 	return blueprints
 }
 
-var ROBOTS = map[string]int{}
-var STOCK = map[string]int{}
-var FACTORY = map[string]int{}
-var PRIORITY = [4]string{"geode", "obsidian", "clay", "ore"}
+var STATES = []State{}
+var STATES_CACHE = map[uint64]struct{}{}
+var MAX_GEODES int
 
-func timeStep(b *Blueprint) {
-	fmt.Println("ROOBTS", ROBOTS)
-	fmt.Println("STOCK", STOCK)
-	fmt.Println("FACTORY", FACTORY)
+func buildRobot(state *State, name int, costs []Cost) State {
+	newState := *state
+	newState.Robots[name]++
+	for _, c := range costs {
+		newState.Stock[c.Name] -= c.Value
+	}
+	return newState
+}
 
-	// has factory finished any robots?
-	for name, _ := range FACTORY {
-		for FACTORY[name] > 0 {
-			fmt.Printf("finished %s robot\n", name)
-			FACTORY[name]--
-			ROBOTS[name]++
+func harvest(state *State) {
+	state.Time++
+	for i, s := range state.Robots {
+		state.Stock[i] += s
+	}
+}
+
+func addState(s *State) {
+	hash := s.hash()
+	_, ok := STATES_CACHE[hash]
+	if !ok {
+		STATES = append(STATES, *s)
+		STATES_CACHE[hash] = struct{}{}
+	}
+}
+
+func calcLimits(b *Blueprint) [4]int {
+	limits := [4]int{}
+	for _, r := range b.Robots {
+		for _, c := range r.Costs {
+			limits[c.Name] = util.Max(c.Value, limits[c.Name])
 		}
 	}
+	return limits
+}
 
-	// start building new robots, update stock
-	for _, name := range PRIORITY {
-		availStock := true
-		for availStock {
-			r := b.robots[name]
-			for _, c := range r.costs {
-				availStock = STOCK[c.name] >= c.value
-			}
-			if availStock {
-				// build new robot
-				fmt.Printf("building %s robot\n", r.name)
-				FACTORY[r.name] += 1
-				for _, c := range r.costs {
-					STOCK[c.name] -= c.value
-				}
-			}
-		}
+func evolve(b *Blueprint, state *State, limits [4]int) {
+	// using this state what is max geodes that could be produced in remaining time
+	timeLeft := DURATION - state.Time
+	geodes := state.Stock[GEODE] + timeLeft*state.Robots[GEODE]
+	if geodes > MAX_GEODES {
+		// fmt.Println(*state, geodes)
+		MAX_GEODES = geodes
 	}
 
-	// collecting robots add to stock
-	for name, number := range ROBOTS {
-		STOCK[name] += number
+	if state.Time >= DURATION {
+		return
+	}
+
+	// what if optimisitic geode building cannot beat our best obvservation
+	extraGeodes := ((timeLeft * timeLeft) + timeLeft) / 2
+	if extraGeodes+state.Stock[GEODE] < MAX_GEODES-1 {
+		return
+	}
+
+	// the do nothing case
+	newState := *state
+	harvest(&newState)
+	addState(&newState)
+
+	// try to find better results by building different robots
+	for _, robot := range NAMES {
+		// time taken to build this robot
+		costReq := b.Robots[robot].Costs
+		canBuild := true
+		newRobotState := newState
+
+		for _, c := range costReq {
+			if state.Robots[c.Name] == 0 {
+				canBuild = false
+				break
+			}
+			if state.Stock[c.Name]-c.Value < 0 {
+				canBuild = false
+				break
+			}
+		}
+
+		// if state.Robots[robot] > limits[robot] {
+		// 	// no point building more of a robot if we have enough of them for most expensive robot
+		// 	canBuild = false
+		// }
+
+		if canBuild {
+			// build robot and add new
+			r := buildRobot(&newRobotState, robot, costReq)
+			addState(&r)
+
+			// if we can build a geode robot, no need to build anything else
+			if robot == GEODE {
+				break
+			}
+		}
 	}
 }
 
 func runBlueprint(blueprint Blueprint) int {
-	ROBOTS = map[string]int{
-		"ore":      1,
-		"clay":     0,
-		"obsidian": 0,
-		"geode":    0,
+	MAX_GEODES = 0
+	STATES_CACHE = map[uint64]struct{}{}
+	STATES = make([]State, 1)
+	STATES[0] = State{Robots: [4]int{1, 0, 0, 0}, Time: 0}
+
+	limits := calcLimits(&blueprint)
+	// fmt.Println("Limits:", limits)
+
+	for len(STATES) > 0 {
+		latestState := STATES[len(STATES)-1]
+		STATES = STATES[:len(STATES)-1]
+		evolve(&blueprint, &latestState, limits)
 	}
-	STOCK = map[string]int{
-		"ore":      0,
-		"clay":     0,
-		"obsidian": 0,
-		"geode":    0,
-	}
-	FACTORY = map[string]int{
-		"ore":      0,
-		"clay":     0,
-		"obsidian": 0,
-		"geode":    0,
-	}
-	for i := 0; i < DURATION; i++ {
-		fmt.Printf("Time: %d\n", i)
-		timeStep(&blueprint)
-	}
-	return STOCK["geodes"]
+	return MAX_GEODES
 }
 
 func Main(testmode bool) {
@@ -138,10 +223,38 @@ func Main(testmode bool) {
 	}
 
 	blueprints := parseInput(input)
-	geodes := make([]int, len(blueprints))
+	result := 0
 
-	for i, b := range blueprints[:1] {
-		geodes[i] = runBlueprint(b)
-		fmt.Printf("Blueprint %d geodes: %d\n", i, geodes[i])
+	// part 1
+	DURATION = 24
+	for i, b := range blueprints {
+		t := time.Now()
+		g := runBlueprint(b)
+		r := (i + 1) * g
+		result += r
+		fmt.Printf(
+			"Blueprint %d geodes: %d, score: %d, perf: %s\n",
+			i,
+			g,
+			r,
+			time.Since(t),
+		)
 	}
+	fmt.Println("Part 1 result:", result)
+
+	// part 2
+	DURATION = 32
+	result = 1
+	for i, b := range blueprints {
+		t := time.Now()
+		g := runBlueprint(b)
+		result *= g
+		fmt.Printf(
+			"Blueprint %d geodes: %d, perf: %s\n",
+			i,
+			g,
+			time.Since(t),
+		)
+	}
+	fmt.Println("Part 2 result:", result)
 }
