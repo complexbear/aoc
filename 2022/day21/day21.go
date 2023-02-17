@@ -105,7 +105,10 @@ func branchSolve(name string, monkeys *MonkeyMap, target int) {
 
 func part1(monkeys *MonkeyMap) {
 	calcMonkey("root", monkeys)
-	fmt.Println("Root:", (*monkeys)["root"].Value)
+	root := (*monkeys)["root"]
+	fmt.Println("Root:", root.Value)
+	fmt.Println("Root left:",  (*monkeys)[root.Left].Value)
+	fmt.Println("Root right:",  (*monkeys)[root.Right].Value)
 }
 
 func part2(monkeys *MonkeyMap) {
