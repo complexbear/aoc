@@ -2,7 +2,9 @@ package day22
 
 import (
 	"aoc/util"
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -56,13 +58,21 @@ func mapVal(p *Position) byte {
 }
 
 func printMap() {
+	f, _ := os.Create("map.txt")
+	w := bufio.NewWriter(f)
+	defer f.Close()
+
 	m := &ROUTE_MAP
 	for y, cols := range *m {
 		fmt.Printf("%03d: ", y)
+		fmt.Fprintf(w, "%03d: ", y)
 		for _, val := range cols {
-			fmt.Printf("%s ", string(val))
+			fmt.Printf("%s", string(val))
+			fmt.Fprintf(w, "%s", string(val))
 		}
 		fmt.Println()
+		fmt.Fprintln(w)
+		w.Flush()
 	}
 	fmt.Println("-----------------")
 }
@@ -109,24 +119,32 @@ func parsePath(text string) Path {
 		)
 		lenText = []byte{}
 	}
-	fmt.Println(path)
+	for i, p := range path {
+		fmt.Println(i, ":", p.move, string(p.direction))
+	}
 	return path
 }
 
 func parseMap(text []string) Map {
-	MAX_X = len(text[0])
-	MAX_Y = len(text)
-	emptyRow := make([]byte, MAX_X)
-	for i := 0; i < MAX_X; i++ {
-		emptyRow[i] = ' '
+	MAX_X = 0
+	for _, t := range text {
+		MAX_X = util.Max(MAX_X, len(t))
 	}
+	MAX_Y = len(text)
 	routeMap := make([][]byte, MAX_Y)
 	for i, t := range text {
-		routeMap[i] = emptyRow
-		copy([]byte(t), routeMap[i])
+		row := make([]byte, MAX_X)
+		for j := 0; j < MAX_X; j++ {
+			if j < len(t) {
+				row[j] = t[j]
+			} else {
+				row[j] = ' '
+			}
+
+		}
+		routeMap[i] = row
 	}
 	POS = Position{x: strings.Index(text[0], "."), y: 0}
-	fmt.Println(POS)
 	return routeMap
 }
 
@@ -148,37 +166,39 @@ func finalResult() int {
 	return 1000*row + 4*col + facing
 }
 
-func wrap(pos Position) Position {
-	// expect pos to be off the map
-	if pos.x >= MAX_X {
-		pos.x = 0
-		for mapVal(&pos) == ' ' {
-			pos.x++
+func step(pos *Position) (Position, bool) {
+	next_pos := *pos
+	hitwall := false
+
+	for true {
+		// handle all cases where position needs to be wrapped
+		next_pos.add(FACING_MOVES[FACING])
+
+		if next_pos.x < 0 {
+			next_pos.x = MAX_X - 1
 		}
-	} else if pos.x >= MAX_X {
-		pos.x = MAX_X - 1
-		for mapVal(&pos) == ' ' {
-			pos.x--
+		if next_pos.y < 0 {
+			next_pos.y = MAX_Y - 1
 		}
-	} else if pos.y == -1 {
-		pos.y = MAX_Y - 1
-		for mapVal(&pos) == ' ' {
-			pos.y--
+
+		// if we run off the end of the map
+		next_pos.x %= MAX_X
+		next_pos.y %= MAX_Y
+
+		// pos now should be legal
+		switch mapVal(&next_pos) {
+		case ' ':
+			break // run on
+		case '#':
+			{
+				hitwall = true
+				return *pos, hitwall
+			}
+		case '.':
+			return next_pos, hitwall
 		}
-	} else if pos.y == MAX_Y {
-		pos.y = 0
-		for mapVal(&pos) == ' ' {
-			pos.y++
-		}
-	} else if mapVal(&pos) == ' ' {
-		move := FACING_MOVES[FACING]
-		pos.subtract(move)
-		for mapVal(&pos) != ' ' {
-			pos.subtract(move)
-		}
-		pos.add(move)
 	}
-	return pos
+	return *pos, hitwall
 }
 
 func rotate(facing byte, direction byte) byte {
@@ -211,21 +231,12 @@ func rotate(facing byte, direction byte) byte {
 func move(instruction Instruction) {
 	curr_pos := POS
 	next_pos := POS
+	hitwall := false
 	if instruction.move != 0 {
 		for i := 0; i < instruction.move; i++ {
 			// printMap()
-			next_pos.add(FACING_MOVES[FACING])
-			if next_pos.x >= MAX_X || next_pos.x == -1 || next_pos.y == -1 || next_pos.y == MAX_Y {
-				// wrap position
-				next_pos = wrap(next_pos)
-			}
-			val := mapVal(&next_pos)
-			if val == ' ' {
-				// wrap position
-				next_pos = wrap(next_pos)
-				val = mapVal(&next_pos)
-			}
-			if val == '#' {
+			next_pos, hitwall = step(&curr_pos)
+			if hitwall {
 				break
 			}
 			curr_pos = next_pos
@@ -253,5 +264,6 @@ func Main(testmode bool) {
 	for _, i := range PATH {
 		move(i)
 	}
+	printMap()
 	fmt.Println("Result:", finalResult())
 }

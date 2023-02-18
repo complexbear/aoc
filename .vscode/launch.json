@@ -9,6 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
+            "cwd": "${workspaceFolder}/2022",
             "program": "${workspaceFolder}/2022",
             "args": ["-day", "22"]
         }
