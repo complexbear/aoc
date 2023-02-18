@@ -46,6 +46,18 @@ func (p *Position) add(other Position) {
 	p.y += other.y
 }
 
+func printMap() {
+	m := &ROUTE_MAP
+	for y, cols := range *m {
+		fmt.Printf("%03d: ", y)
+		for _, val := range cols {
+			fmt.Printf("%s ", string(val))
+		}
+		fmt.Println()
+	}
+	fmt.Println("-----------------")
+}
+
 func parseInput(text []string) {
 	var routeText []string
 	var pathText string
@@ -163,11 +175,11 @@ func move(instruction Instruction) {
 				// wrap position
 				next_pos = wrap(next_pos)
 			}
-			val := ROUTE_MAP[next_pos.x][next_pos.y]
+			val := ROUTE_MAP[next_pos.y][next_pos.x]
 			if val == ' ' {
 				// wrap position
 				next_pos = wrap(next_pos)
-				val = ROUTE_MAP[next_pos.x][next_pos.y]
+				val = ROUTE_MAP[next_pos.y][next_pos.x]
 			}
 			if val == '#' {
 				break
@@ -175,9 +187,11 @@ func move(instruction Instruction) {
 			curr_pos = next_pos
 		}
 		POS = curr_pos
+		ROUTE_MAP[POS.y][POS.x] = FACING
 	} else {
 		FACING = rotate(instruction.direction)
 	}
+
 }
 
 func Main(testmode bool) {
@@ -189,6 +203,9 @@ func Main(testmode bool) {
 	}
 
 	parseInput(input)
+	ROUTE_MAP[POS.y][POS.x] = FACING
+
+	printMap()
 	for _, i := range PATH {
 		move(i)
 	}
