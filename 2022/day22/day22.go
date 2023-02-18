@@ -46,6 +46,15 @@ func (p *Position) add(other Position) {
 	p.y += other.y
 }
 
+func (p *Position) subtract(other Position) {
+	p.x -= other.x
+	p.y -= other.y
+}
+
+func mapVal(p *Position) byte {
+	return ROUTE_MAP[p.y][p.x]
+}
+
 func printMap() {
 	m := &ROUTE_MAP
 	for y, cols := range *m {
@@ -107,9 +116,14 @@ func parsePath(text string) Path {
 func parseMap(text []string) Map {
 	MAX_X = len(text[0])
 	MAX_Y = len(text)
-	routeMap := make([][]byte, MAX_X)
+	emptyRow := make([]byte, MAX_X)
+	for i := 0; i < MAX_X; i++ {
+		emptyRow[i] = ' '
+	}
+	routeMap := make([][]byte, MAX_Y)
 	for i, t := range text {
-		routeMap[i] = []byte(t)
+		routeMap[i] = emptyRow
+		copy([]byte(t), routeMap[i])
 	}
 	POS = Position{x: strings.Index(text[0], "."), y: 0}
 	fmt.Println(POS)
@@ -117,8 +131,8 @@ func parseMap(text []string) Map {
 }
 
 func finalResult() int {
-	row := POS.x + 1
-	col := POS.y + 1
+	row := POS.y + 1
+	col := POS.x + 1
 	facing := -1
 	switch FACING {
 	case '>':
@@ -135,12 +149,41 @@ func finalResult() int {
 }
 
 func wrap(pos Position) Position {
+	// expect pos to be off the map
+	if pos.x >= MAX_X {
+		pos.x = 0
+		for mapVal(&pos) == ' ' {
+			pos.x++
+		}
+	} else if pos.x >= MAX_X {
+		pos.x = MAX_X - 1
+		for mapVal(&pos) == ' ' {
+			pos.x--
+		}
+	} else if pos.y == -1 {
+		pos.y = MAX_Y - 1
+		for mapVal(&pos) == ' ' {
+			pos.y--
+		}
+	} else if pos.y == MAX_Y {
+		pos.y = 0
+		for mapVal(&pos) == ' ' {
+			pos.y++
+		}
+	} else if mapVal(&pos) == ' ' {
+		move := FACING_MOVES[FACING]
+		pos.subtract(move)
+		for mapVal(&pos) != ' ' {
+			pos.subtract(move)
+		}
+		pos.add(move)
+	}
 	return pos
 }
 
-func rotate(direction byte) byte {
+func rotate(facing byte, direction byte) byte {
 	if direction == 'R' {
-		switch FACING_MOVES[FACING] {
+		switch FACING_MOVES[facing] {
 		case LEFT:
 			return '^'
 		case RIGHT:
@@ -151,7 +194,7 @@ func rotate(direction byte) byte {
 			return '<'
 		}
 	} else {
-		switch FACING_MOVES[FACING] {
+		switch FACING_MOVES[facing] {
 		case LEFT:
 			return 'v'
 		case RIGHT:
@@ -170,28 +213,29 @@ func move(instruction Instruction) {
 	next_pos := POS
 	if instruction.move != 0 {
 		for i := 0; i < instruction.move; i++ {
+			// printMap()
 			next_pos.add(FACING_MOVES[FACING])
-			if next_pos.x >= MAX_X {
+			if next_pos.x >= MAX_X || next_pos.x == -1 || next_pos.y == -1 || next_pos.y == MAX_Y {
 				// wrap position
 				next_pos = wrap(next_pos)
 			}
-			val := ROUTE_MAP[next_pos.y][next_pos.x]
+			val := mapVal(&next_pos)
 			if val == ' ' {
 				// wrap position
 				next_pos = wrap(next_pos)
-				val = ROUTE_MAP[next_pos.y][next_pos.x]
+				val = mapVal(&next_pos)
 			}
 			if val == '#' {
 				break
 			}
 			curr_pos = next_pos
+			ROUTE_MAP[curr_pos.y][curr_pos.x] = FACING
 		}
 		POS = curr_pos
-		ROUTE_MAP[POS.y][POS.x] = FACING
 	} else {
-		FACING = rotate(instruction.direction)
+		FACING = rotate(FACING, instruction.direction)
 	}
-
+	ROUTE_MAP[POS.y][POS.x] = FACING
 }
 
 func Main(testmode bool) {
