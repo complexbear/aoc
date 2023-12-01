@@ -25,15 +25,23 @@ NUMBERS = [
     "eight",
     "nine",
 ]
-MAX_NUMBER_WORD = 5
+MAX_NUMBER_WORD = max(len(n) for n in NUMBERS)
 
 
-def findWord(line):
+def findWord(line: str):
     for n, number in enumerate(NUMBERS):
         idx = line[:MAX_NUMBER_WORD].find(number)
         if idx == 0:
             return n
     return None
+
+def findNumber(line: str, with_word: bool):
+    n = None
+    if line[0].isdigit():
+        n = line[0]
+    elif with_word:
+        n = findWord(line)
+    return n or None
 
 
 def extractNumber(line: str, with_word: bool):
@@ -41,21 +49,9 @@ def extractNumber(line: str, with_word: bool):
     i, j = 0, len(line) - 1
     while a is None or b is None:
         if a is None:
-            if line[i].isdigit():
-                a = line[i]
-            if with_word:
-                n = findWord(line[i:])
-                if n is not None:
-                    a = n
-
+            a = findNumber(line[i:], with_word)
         if b is None:
-            if line[j].isdigit():
-                b = line[j]
-            if with_word:
-                n = findWord(line[j:])
-                if n is not None:
-                    b = n
-
+            b = findNumber(line[j:], with_word)
         i += 1
         j -= 1
     return (int(a) * 10) + int(b)
