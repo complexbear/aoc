@@ -5,6 +5,5 @@ DAY=$1
 mkdir "day${DAY}"
 cd "day${DAY}"
 
-echo 'def main(testmode bool):\n\tpass' > "main.py"
-
+cp ../template.py ./main.py
 touch "input.txt"
