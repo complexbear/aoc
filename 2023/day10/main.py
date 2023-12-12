@@ -1,5 +1,5 @@
 from copy import deepcopy
-from collections import deque
+from collections import deque, defaultdict
 from dataclasses import dataclass
 from io import StringIO
 from typing import List, Union
@@ -39,7 +39,7 @@ L7JLJL-JLJLJL--JLJ.L"""
 
 
 # Top left corner => (0, 0)
-@dataclass
+@dataclass(frozen=True)
 class Point:
     x: int
     y: int
@@ -72,26 +72,42 @@ class Maze:
     def _off_grid(self, p: Point) -> bool:
         return p.x < 0 or p.y < 0 or p.x >= self.max_x or p.y >= self.max_y
 
+    @staticmethod
+    def _update_point(p, x=0, y=0) -> Point:
+        return Point(p.x + x, p.y + y)
+
     def _next_point(self, prev: Point, current: Point) -> Union[None, Point]:
         """Return next point from this start point"""
         next_ = Point(current.x, current.y)
         this = self.grid[current.y][current.x]
         if this == "|":
-            next_.y += current.y - prev.y
+            next_ = self._update_point(next_, y=current.y - prev.y)
         elif this == "-":
-            next_.x += current.x - prev.x
+            next_ = self._update_point(next_, x=current.x - prev.x)
         elif this == "L":
-            next_.x += 1 if current.x == prev.x else 0
-            next_.y += -1 if current.y == prev.y else 0
+            next_ = self._update_point(
+                next_,
+                x=1 if current.x == prev.x else 0,
+                y=-1 if current.y == prev.y else 0,
+            )
         elif this == "7":
-            next_.x += -1 if current.x == prev.x else 0
-            next_.y += 1 if current.y == prev.y else 0
+            next_ = self._update_point(
+                next_,
+                x=-1 if current.x == prev.x else 0,
+                y=1 if current.y == prev.y else 0,
+            )
         elif this == "J":
-            next_.x += -1 if current.x == prev.x else 0
-            next_.y += -1 if current.y == prev.y else 0
+            next_ = self._update_point(
+                next_,
+                x=1 if current.x == prev.x else 0,
+                y=-1 if current.y == prev.y else 0,
+            )
         elif this == "F":
-            next_.x += 1 if current.x == prev.x else 0
-            next_.y += 1 if current.y == prev.y else 0
+            next_ = self._update_point(
+                next_,
+                x=1 if current.x == prev.x else 0,
+                y=1 if current.y == prev.y else 0,
+            )
 
         if self._off_grid(next_):
             return None
@@ -181,18 +197,37 @@ class Maze:
         print("\n".join(output))
 
     def find_area(self):
-        area = []
+        max_x = defaultdict(int)
+        for p in self.loop_path:
+            max_x[p.y] = max(max_x.get(p.y, 0), p.x)
+
+        area_x = set()
         for y in range(self.max_y):
             inside = False
             for x in range(self.max_x):
                 p = Point(x, y)
                 if inside and p in self.loop_path:
                     inside = False
-                elif p in self.loop_path:
+                if p in self.loop_path:
                     inside = True
+                elif p.x >= max_x[p.y]:
+                    inside = False
                 elif inside:
-                    area.append(p)
-        self.in_loop = area
+                    area_x.add(p)
+        area_y = set()
+        for x in range(self.max_x):
+            inside = False
+            for y in range(self.max_y):
+                p = Point(x, y)
+                if inside and p in self.loop_path:
+                    inside = False
+                if p in self.loop_path:
+                    inside = True
+                elif p.x >= max_x[p.y]:
+                    inside = False
+                elif inside:
+                    area_y.add(p)
+        self.in_loop = area_x.intersection(area_y)
 
 
 def main(text, find_area=False):
@@ -211,11 +246,11 @@ def main(text, find_area=False):
 if __name__ == "__main__":
     main(StringIO(EXAMPLE_1))
     main(StringIO(EXAMPLE_2))
-
     with open("input.txt") as f:
         main(f)
 
     main(StringIO(EXAMPLE_3), True)
+    main(StringIO(EXAMPLE_4), True)
 
     with open("input.txt") as f:
         main(f, True)
