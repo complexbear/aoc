@@ -1,6 +1,8 @@
+import operator
 from io import StringIO
 from itertools import cycle
-
+from math import lcm
+from functools import reduce
 from typing import Dict
 
 EXAMPLE_1 = """LLR
@@ -54,16 +56,21 @@ def part2(text) -> int:
     directions, path = parse(text)
     directions = cycle(directions)
     i = 0
-    key_count = 0
+
     keys = [k for k in path if k[-1] == "A"]
     print("keys", keys)
-    while key_count != len(keys):
+    key_z_index = [0] * len(keys)
+    while not all(k > 0 for k in key_z_index):
         d = next(directions)
         keys = [path[k][0] if d == "L" else path[k][1] for k in keys]
         i += 1
-        key_count = len([1 for k in keys if k[-1] == "Z"])
-    print(i)
-    return i
+        for j, k in enumerate(keys):
+            if k[-1] == "Z":
+                key_z_index[j] = i
+    print(key_z_index)
+    result = lcm(*key_z_index)
+    print(result)
+    return result
 
 
 if __name__ == "__main__":
