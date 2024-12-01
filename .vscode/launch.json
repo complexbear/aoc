@@ -5,13 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "Launch JS",
+            "cwd": "${workspaceFolder}/2024/day1",
+            "program": "${workspaceFolder}/2024/day1/day1.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
+            "name": "Launch Go",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}/2022",
             "program": "${workspaceFolder}/2022",
             "args": ["-day", "22"]
-        }
+        },
     ]
 }
